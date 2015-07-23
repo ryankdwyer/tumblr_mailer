@@ -1,6 +1,8 @@
 var fs = require('fs');
 var ejs = require('ejs');
-var tumblr_url = 'ryankdwyer.tumblr.com'
+var mandrill = require('mandrill-api/mandrill');
+var mandrill_client = new mandrill.Mandrill('C4gUi_bfFEpoRu-mEFpsTg');
+var tumblr_url = 'ryankdwyer.tumblr.com';
 
 // Read in the email template and csv file of contacts
 var csvFile = fs.readFileSync('friend_list.csv', 'utf8');
@@ -14,24 +16,23 @@ var client = tumblr.createClient({
   token_secret: 'uyiBgRLCF75W54pR3kDYtI1fOKMXnrORosiutQUqIgSdfF5kb8'
 });
 
-client.posts(tumblr_url, function(err, blog){
-	var posts = blog.posts;
-	posts = latestPost(posts, 50);
-	var csv_data = csvParse(csvFile);
-	var custom_template = ejsTemplateRenderer(email_template, csv_data, posts);
-});
+// Mandrill email variables
+var from = 'Ryan Dwyer';
+var from_email = 'ryankdwyer@gmail.com';
+var subject = 'Blog Posts';
+
 // This function adds an object to an array
 function addObject(line, arr, headers) {
 	var obj = {};
 	line.forEach(function(curr, idx) {
-		obj[headers[idx]] = curr
-	})
+		obj[headers[idx]] = curr;
+	});
 	return arr.push(obj);
 }
 
 // Handles csv prep - removes headers and saves them
 function filePrep(csvFile) {
-	csvFile = csvFile.split('\n').slice(0,-1);
+	csvFile = csvFile.split('\n');
 	var headers = csvFile[0].split(',');
 	csvFile = csvFile.slice(1);
 	return [csvFile, headers];
@@ -51,7 +52,7 @@ function csvParse(csvFile) {
 	data[0].forEach(function(el){
 		line = el.split(',');
 		addObject(line, output, data[1]);
-	})
+	});
 	return output;
 }
 
@@ -64,7 +65,7 @@ function ejsTemplateRenderer(template, data, posts){
 			{ firstName: el.firstName,
 			  numMonthsSinceContact: el.numMonthsSinceContact,
 			  latestPosts: posts}));
-	})
+	});
 	return output;
 }
 // Finds latest posts based on a threshold given in days
@@ -77,6 +78,53 @@ function latestPost(posts, threshold) {
 		if (date - test_date < ms) {
 			output.push(el);
 		}
-	})
+	});
 	return output;
 }
+
+// Mandrill email function
+function sendEmail(to_name, to_email, from_name, from_email, subject, message_html){
+	var message = {
+	    "html": message_html,
+	    "subject": subject,
+	    "from_email": from_email,
+	    "from_name": from_name,
+	    "to": [{
+	            "email": to_email,
+	            "name": to_name
+	        }],
+	    "important": false,
+	    "track_opens": true,    
+	    "auto_html": false,
+	    "preserve_recipients": true,
+	    "merge": false,
+	    "tags": [
+	        "Fullstack_Tumblrmailer_Workshop"
+	    ]    
+	};
+	var async = false;
+	var ip_pool = "Main Pool";
+	mandrill_client.messages.send({"message": message, "async": async, "ip_pool": ip_pool}, function(result) {
+	    console.log(message);
+	    console.log(result);   
+	}, function(e) {
+	    // Mandrill returns the error as an object with name and message keys
+	    console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+	    // A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+	});
+}
+
+
+client.posts(tumblr_url, function(err, blog){
+	var latestPosts = latestPost(blog.posts, 50);
+	var csv_data = csvParse(csvFile); // Array
+	var custom_template = ejsTemplateRenderer(email_template, csv_data, latestPosts); // Array
+	csv_data.forEach(function(el, idx){
+		sendEmail(el.firstName + ' ' + el.lastName, 
+				  el['emailAddress'], 
+				  from, 
+				  from_email, 
+				  subject, 
+				  custom_template[idx]);
+	});
+});

@@ -14,7 +14,7 @@
     Look at my most recent posts:
     <ul>
       <% for(var i=0; i<latestPosts.length; i++) {%>
-         <li><a href=<%= latestPosts[i].href %> <%= latestPosts[i].title %></a>  </li>
+         <li><a href=<%= latestPosts[i].post_url %> > <%= latestPosts[i].title %></a>  </li>
       <% } %>
     </ul>
   </p>
