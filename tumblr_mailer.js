@@ -1,7 +1,7 @@
 var fs = require('fs');
 var ejs = require('ejs');
 var mandrill = require('mandrill-api/mandrill');
-var mandrill_client = new mandrill.Mandrill('C4gUi_bfFEpoRu-mEFpsTg');
+var mandrill_client = new mandrill.Mandrill('KEY');
 var tumblr_url = 'ryankdwyer.tumblr.com';
 
 // Read in the email template and csv file of contacts
@@ -10,10 +10,10 @@ var email_template = fs.readFileSync('email_template.html', 'utf8');
 // Authenticate via OAuth
 var tumblr = require('tumblr.js');
 var client = tumblr.createClient({
-  consumer_key: '0qE5EQpvpxhMTTQ2VqT7k3kd6s8WdNZAqL8c6VBr3MVwFH8MxU',
-  consumer_secret: 'nJBu0Ab7ujxNI3tWM5YyqdER7B9Re0HdZoMN6wIAdbyrzis91Y',
-  token: 'ForWAYUtTJRtn8zGHTbIsSOKvpgtbnzY8cQyl6NzDDD316J5Du',
-  token_secret: 'uyiBgRLCF75W54pR3kDYtI1fOKMXnrORosiutQUqIgSdfF5kb8'
+  consumer_key: 'KEY',
+  consumer_secret: 'KEY',
+  token: 'KEY',
+  token_secret: 'KEY'
 });
 
 // Mandrill email variables
